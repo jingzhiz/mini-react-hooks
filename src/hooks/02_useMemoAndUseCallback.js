@@ -68,48 +68,32 @@ function useCallback (callback, deps) {
   }
 }
 
-function useEffect(callback, deps) {
-  if (hookState[hookIndex]) {
-    const [lastDestroy, lastDeps] = hookState[hookIndex]
+function Child({ data, onButtonClick }) {
+  console.log('rerender')
 
-    let isSame = false
-    if (lastDeps) {
-      isSame = deps.every((item, index) => item === lastDeps[index])
-    }
-    if (isSame) {
-      hookIndex++
-    } else {
-      lastDestroy && lastDestroy()
-      const destroy = callback()
-      hookState[hookIndex++] = [destroy, deps]
-    }
-  } else {
-    const destroy = callback()
-    hookState[hookIndex++] = [destroy, deps]
-  }
+  return (
+    <div>
+      <h2>{data.age}</h2>
+      <button onClick={onButtonClick}>button</button>
+    </div>
+  )
 }
+
+const ChildMemo = React.memo(Child)
 
 function App() {
   const [name, setName] = useState('净植')
   const [age, setAge] = useState(18)
 
-  useEffect(() => {
-    console.log('useEffect')
-    let timer = setInterval(() => {
-      setAge(age + 1)
-    }, 1000)
-
-    return () => {
-      clearInterval(timer)
-    }
-  }, [age])
+  const data = useMemo(() => ({ age }), [age])
+  const handleButtonClick = useCallback(() => setAge(age + 1), [age])
 
   return (
     <div className="App">
       <h2>{name}</h2>
       <input value={name} onInput={(e) => setName(e.target.value)}></input>
-      <h2>当前{age}岁</h2>
-      <button onClick={() => setAge(age + 1)}>增加年龄</button>
+      <hr/>
+      <ChildMemo data={data} onButtonClick={handleButtonClick}></ChildMemo>
     </div>
   )
 }
