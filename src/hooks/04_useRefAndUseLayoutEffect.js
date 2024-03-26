@@ -6,17 +6,16 @@ let hookIndex = 0
 let hookState = [] // 用于保存所有状态的数组
 
 function useState(initialState) {
-  // hookState[hookIndex] = hookState[hookIndex] || initialState
+  hookState[hookIndex] = hookState[hookIndex] || initialState
 
-  // // 声明一个 currentIndex 用来保证每个 setState 都是指向自己的 state
-  // const currentIndex = hookIndex
-  // function setState(newState) {
-  //   hookState[currentIndex] = newState
-  //   render()
-  // }
+  // 声明一个 currentIndex 用来保证每个 setState 都是指向自己的 state
+  const currentIndex = hookIndex
+  function setState(newState) {
+    hookState[currentIndex] = newState
+    render()
+  }
 
-  // return [hookState[hookIndex++], setState]
-  return useReducer(null, initialState)
+  return [hookState[hookIndex++], setState]
 }
 
 function useMemo (factory, deps) {
@@ -126,59 +125,31 @@ function useLayoutEffect(callback, deps) {
   }
 }
 
-function useReducer(reducer, initialState) {
-  hookState[hookIndex] = hookState[hookIndex] || initialState
-  let currentIndex = hookIndex
-  function dispatch(action) {
-    hookState[currentIndex] = reducer ? reducer(hookState[currentIndex], action) : action
-    render()
+function App() {
+  const box1 = useRef()
+  const box2 = useRef()
+
+  const style = {
+    height: '100px',
+    width: '100px'
   }
-  return [hookState[hookIndex++], dispatch]
-}
 
-function useContext(context) {
-  return context._currentValue
-}
-
-function useImperativeHandle(ref, handle) {
-  if (ref) {
-    ref.current = handle()
-  }
-}
-
-function Child(props, ref) {
-  useImperativeHandle(ref, () => {
-    return {
-      focus: () => {
-        console.log('子组件获取焦点')
-      },
-      blur: () => {
-        console.log('子组件失去焦点')
-      }
-    }
+  useEffect(() => {
+    // Dom 渲染完成后才将属性加上，动画正常触发
+    box1.current.style.transform = 'translate(300px)'
+    box1.current.style.transition = 'all .5s'
+  })
+  useLayoutEffect(() => {
+    // Dom 渲染完成前就已经将属性加上，导致无法触发动画
+    box2.current.style.transform = 'translate(300px)'
+    box2.current.style.transition = 'all .5s'
   })
 
   return (
-    // <input ref={ref} type='text' placeholder='请输入' />
-    <input type='text' placeholder='请输入' />
-  )
-}
-
-const ForwardRefChild = React.forwardRef(Child)
-
-function App() {
-  const childRef = useRef()
-
-  const getFocus = () => {
-    console.log(childRef.current)
-    childRef.current.focus()
-  }
-
-  return (
-    <>
-      <ForwardRefChild ref={childRef}/>
-      <button onClick={getFocus}>子组件获取焦点</button>
-    </>
+    <div>
+      <div ref={box1} style={{...style, background: 'green'}}></div>
+      <div ref={box2} style={{...style, background: 'yellow'}}></div>
+    </div>
   )
 }
 

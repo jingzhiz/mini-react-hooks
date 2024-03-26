@@ -140,45 +140,26 @@ function useContext(context) {
   return context._currentValue
 }
 
-function useImperativeHandle(ref, handle) {
-  if (ref) {
-    ref.current = handle()
-  }
-}
+const CountContext = React.createContext()
 
-function Child(props, ref) {
-  useImperativeHandle(ref, () => {
-    return {
-      focus: () => {
-        console.log('子组件获取焦点')
-      },
-      blur: () => {
-        console.log('子组件失去焦点')
-      }
-    }
-  })
-
-  return (
-    // <input ref={ref} type='text' placeholder='请输入' />
-    <input type='text' placeholder='请输入' />
-  )
-}
-
-const ForwardRefChild = React.forwardRef(Child)
-
-function App() {
-  const childRef = useRef()
-
-  const getFocus = () => {
-    console.log(childRef.current)
-    childRef.current.focus()
-  }
+function Child() {
+  const { count, setCount } = useContext(CountContext)
 
   return (
     <>
-      <ForwardRefChild ref={childRef}/>
-      <button onClick={getFocus}>子组件获取焦点</button>
+      <h2>当前计数：{count}</h2>
+      <button onClick={() => setCount(count + 1)}>点击+1</button>
     </>
+  )
+}
+
+function App() {
+  let [count, setCount] = useState(0)
+
+  return (
+    <CountContext.Provider value={{ count, setCount }}>
+      <Child />
+    </CountContext.Provider>
   )
 }
 
